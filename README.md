@@ -74,7 +74,12 @@ public/models/          Blender 匯出的 GLB 模型
 2. 選擇這個 GitHub repo。Render 會讀取 `render.yaml`，執行 `npm ci && npm run build`，並發布 `dist/`。
 3. 之後每次 push 到 `main` 都會自動部署。
 
-如果要手動建立 Static Site：Build Command 填 `npm ci && npm run build`，Publish Directory 填 `dist`。
+如果要手動建立，有兩種方式：
+
+| 服務類型 | Build Command | 其他設定 |
+|---|---|---|
+| **Static Site**（建議，免費、不會休眠） | `npm ci && npm run build` | Publish Directory 填 `dist` |
+| **Web Service**（Node） | `npm ci && npm run build` | Start Command 填 `npm start`（由 `server.mjs` 提供 `dist/`） |
 
 ### GitHub Pages
 
