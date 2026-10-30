@@ -4,89 +4,35 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>嘉義高中 3D 校園導覽</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="國立嘉義高中互動 3D 校園導覽：建築、班級教室、樓層切換、搜尋與校園漫步。">
+<meta property="og:title" content="國立嘉義高中 3D 校園導覽">
+<meta property="og:description" content="搜尋班級教室、切換樓層，在 3D 校園裡漫步。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
-<style>
-/* Layout: full-bleed 3D map; floating search card top-left, floor rail right, info sheet bottom */
-:root{
-  --bg:#dfe7e3; --ground:#e6e1cf; --panel:rgba(255,253,247,.92); --line:#c9c3ae;
-  --fg:#23302b; --muted:#66706a; --accent:#1f6f5c; --accent-ink:#fff; --mark:#e0453a;
-  --label-bg:rgba(255,253,247,.9);
-  --f-display:"LXGW WenKai TC","Noto Serif TC",serif;
-  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#12191a; --ground:#2b2e28; --panel:rgba(24,31,31,.92); --line:#3a4542;
-  --fg:#e7ece6; --muted:#9aa59f; --accent:#5cc3a6; --accent-ink:#0d1a16; --mark:#ff7a6b;
-  --label-bg:rgba(24,31,31,.88); color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#12191a; --ground:#2b2e28; --panel:rgba(24,31,31,.92); --line:#3a4542;
-  --fg:#e7ece6; --muted:#9aa59f; --accent:#5cc3a6; --accent-ink:#0d1a16; --mark:#ff7a6b;
-  --label-bg:rgba(24,31,31,.88); color-scheme:dark}
-html,body{height:100%;overflow:hidden}
-body{background:var(--bg);color:var(--fg);font-family:var(--f-body)}
-#stage{position:fixed;inset:0}
-#stage canvas{display:block;touch-action:none}
-#labels{position:fixed;inset:0;pointer-events:none;overflow:hidden}
-.lbl{position:absolute;left:0;top:0;white-space:nowrap;font-size:12px;font-weight:500;
-  padding:2px 7px;border-radius:4px;background:var(--label-bg);border:1px solid var(--line);
-  color:var(--fg);pointer-events:auto;cursor:pointer;will-change:transform}
-.lbl.bld{font-family:var(--f-display);font-size:14px;font-weight:700}
-.lbl.room{font-family:var(--f-mono);font-size:11px;padding:1px 5px}
-.lbl.minor{font-size:11px;color:var(--muted)}
-.lbl.sel{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.card{position:fixed;background:var(--panel);border:1px solid var(--line);border-radius:10px;
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 6px 24px rgba(0,0,0,.12)}
-#top{top:calc(12px + env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));
-  width:min(330px,calc(100vw - 32px - 64px));padding:12px}
-#top h1{margin:0;font-family:var(--f-display);font-size:22px;letter-spacing:.04em;text-wrap:balance}
-#top p{margin:2px 0 10px;font-size:12px;color:var(--muted)}
-#q{width:100%;box-sizing:border-box;font:inherit;font-size:14px;padding:8px 10px;border-radius:7px;
-  border:1px solid var(--line);background:transparent;color:var(--fg)}
-#q:focus{outline:2px solid var(--accent);outline-offset:1px}
-#results{list-style:none;margin:6px 0 0;padding:0;max-height:38vh;overflow:auto}
-#results li button{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;gap:8px;
-  width:100%;padding:7px 8px;border-radius:6px;cursor:pointer;font-size:13px}
-#results li button:hover,#results li button:focus-visible{background:color-mix(in srgb,var(--accent) 14%,transparent)}
-#results small{color:var(--muted);font-family:var(--f-mono)}
-#rail{top:calc(12px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));
-  padding:6px;display:flex;flex-direction:column;gap:4px}
-#rail .cap{font-size:10px;letter-spacing:.12em;color:var(--muted);text-align:center;padding:2px 0}
-.btn{font:inherit;font-size:13px;min-width:44px;padding:7px 8px;border-radius:7px;border:1px solid transparent;
-  background:transparent;color:var(--fg);cursor:pointer}
-.btn:hover{border-color:var(--line)}
-.btn:focus-visible{outline:2px solid var(--accent)}
-.btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
-#rail .floor{font-family:var(--f-mono)}
-#rail hr{border:0;border-top:1px solid var(--line);margin:4px 2px;width:auto}
-#info{left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));
-  width:min(560px,calc(100vw - 32px));padding:12px 14px;box-sizing:border-box}
-#info h2{margin:0;font-family:var(--f-display);font-size:20px}
-#info .meta{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
-#info .chip{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
-#info p{margin:4px 0 0;font-size:13px;line-height:1.6}
-#info .x{position:absolute;right:8px;top:6px}
-.hint{font-size:11px;color:var(--muted);margin-top:8px}
-@media (max-width:560px){#top h1{font-size:18px}#top p{display:none}}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
-</style>
+<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
-<div id="stage" aria-label="嘉義高中 3D 校園模型"></div>
+<div id="stage" aria-label="國立嘉義高中 3D 校園模型"></div>
 <div id="labels"></div>
 
 <section id="top" class="card">
-  <h1>國立嘉義高中 3D 校園導覽</h1>
-  <p>拖曳旋轉、滾輪縮放、右鍵平移。點選建築看詳細資訊。</p>
-  <label for="q" class="visually-hidden" hidden>搜尋</label>
-  <input id="q" type="search" placeholder="搜尋建築或教室，例如：圖書館、懷恩 301" autocomplete="off">
+  <header><h1>嘉義高中 3D 校園導覽</h1><span id="year"></span></header>
+  <p>拖曳旋轉、滾輪縮放、右鍵平移。點建築看各樓層教室。</p>
+  <input id="q" type="search" placeholder="搜尋班級或地點，例如 315、輔導室、圖書館" autocomplete="off" aria-label="搜尋班級或地點">
   <ul id="results"></ul>
+  <div class="legend" aria-label="圖例">
+    <span><i style="background:var(--g1)"></i>高一</span>
+    <span><i style="background:var(--g2)"></i>高二</span>
+    <span><i style="background:var(--g3)"></i>高三</span>
+    <span><i style="background:var(--special)"></i>專科教室</span>
+    <span><i style="background:var(--office)"></i>處室</span>
+  </div>
 </section>
 
 <nav id="rail" class="card" aria-label="樓層與檢視">
+  <button class="btn" id="compass" title="回正北" aria-label="回正北">
+    <svg viewBox="0 0 26 26" aria-hidden="true"><g id="needle"><path d="M13 2 L17 13 L13 11.5 L9 13 Z" fill="var(--mark)"/><path d="M13 24 L17 13 L13 14.5 L9 13 Z" fill="var(--muted)"/></g><text x="13" y="8.5" font-size="0" fill="none">N</text></svg>
+  </button>
   <div class="cap">樓層</div>
   <button class="btn floor" data-f="all" aria-pressed="true">全部</button>
   <button class="btn floor" data-f="4" aria-pressed="false">4F</button>
@@ -94,8 +40,9 @@ body{background:var(--bg);color:var(--fg);font-family:var(--f-body)}
   <button class="btn floor" data-f="2" aria-pressed="false">2F</button>
   <button class="btn floor" data-f="1" aria-pressed="false">1F</button>
   <button class="btn floor" data-f="-1" aria-pressed="false">B1</button>
-  <hr>
+  <div class="sep"></div>
   <button class="btn" id="reset" title="回到鳥瞰視角">鳥瞰</button>
+  <button class="btn" id="walkBtn" title="在校園中漫步">漫步</button>
   <button class="btn" id="toggleLbl" aria-pressed="true" title="顯示／隱藏標籤">標籤</button>
 </nav>
 
@@ -104,341 +51,20 @@ body{background:var(--bg);color:var(--fg);font-family:var(--f-body)}
   <h2 id="infoName"></h2>
   <div class="meta" id="infoMeta"></div>
   <p id="infoDesc"></p>
+  <div id="infoFloors"></div>
 </section>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
-<script>
-/* ===== 座標：依校園平面圖像素換算（1px ≈ 0.33m），北方朝上 ===== */
-const S=0.33, FH=3.6, CX=720, CY=840;
-const P=(x,y)=>[(x-CX)*S,(y-CY)*S];
+<div id="walkbar" class="card" hidden>
+  <span class="hint" id="walkHint">WASD／方向鍵移動・拖曳轉向・Shift 跑步</span>
+  <button class="btn" id="povBtn" aria-pressed="false">第一人稱</button>
+  <button class="btn" id="exitWalk">結束漫步</button>
+</div>
+<div id="joy" hidden><i></i></div>
 
-/* 建築資料：r=[左,上,右,下] 平面圖像素範圍；f=地上樓層；b1=有地下室；rooms=教室分隔數（示意編號） */
-const BUILDINGS=[
- {id:'science',name:'科學館',r:[345,285,505,415],f:4,c:'#e04bd8',cat:'專科教室'},
- {id:'tech',name:'生活科技館',r:[520,278,572,420],f:3,c:'#c9a12e',cat:'專科教室'},
- {id:'art',name:'美術館',r:[612,282,755,345],f:3,c:'#f08f96',cat:'專科教室',extra:[[612,345,688,420]]},
- {id:'wood',name:'木工室',r:[755,278,790,348],f:1,c:'#c9a12e',cat:'專科教室'},
- {id:'dorm',name:'陽明學苑',sub:'學生宿舍',r:[765,360,980,445],f:4,c:'#f39af0',cat:'生活'},
- {id:'gifted',name:'資優大樓',r:[1010,285,1090,435],f:4,c:'#d7b79a',cat:'教學',rooms:4,short:'資優'},
- {id:'armory',name:'軍械室',r:[1058,452,1105,490],f:1,c:'#6f9fd8',cat:'行政'},
- {id:'huaien',name:'懷恩樓',r:[778,495,1058,628],f:4,b1:true,c:'#d9c6a8',cat:'教學',rooms:8,short:'懷恩'},
- {id:'xuling',name:'旭陵樓',sub:'行政大樓',r:[783,658,885,855],f:4,b1:true,c:'#d9c6a8',cat:'行政',rooms:5,short:'旭陵',axis:'z'},
- {id:'puyi',name:'樸毅樓',r:[1060,618,1162,855],f:4,b1:true,c:'#d9c6a8',cat:'教學',rooms:6,short:'樸毅',axis:'z'},
- {id:'hongguan',name:'宏觀樓',r:[847,865,1070,968],f:4,b1:true,c:'#d9c6a8',cat:'教學',rooms:7,short:'宏觀'},
- {id:'night',name:'進修部大樓',r:[893,998,1052,1048],f:3,c:'#d8c3a6',cat:'教學'},
- {id:'history',name:'史蹟館',r:[1080,948,1122,1052],f:2,c:'#f39af0',cat:'展覽'},
- {id:'library',name:'圖書館',r:[918,1055,1050,1120],f:3,c:'#f6a03a',cat:'學習資源'},
- {id:'shuren',name:'樹人堂',sub:'活動中心',r:[1038,1155,1135,1268],f:2,c:'#f2efa6',cat:'活動',tall:1.6},
- {id:'music',name:'音樂館',r:[478,965,578,1045],f:2,c:'#f58ae6',cat:'專科教室'},
- {id:'oldmusic',name:'懷舊音樂館',r:[345,942,415,995],f:1,c:'#f58ae6',cat:'專科教室'},
- {id:'clubs',name:'學生社團',r:[413,1208,498,1253],f:1,c:'#f2e21e',cat:'活動'},
- {id:'gym',name:'體育館',r:[507,1208,592,1302],f:2,c:'#f3c189',cat:'運動',tall:1.7},
- {id:'guard',name:'警衛室',r:[632,1362,700,1394],f:1,c:'#8fd1b8',cat:'行政'},
- {id:'wc1',name:'廁所',r:[1083,492,1106,530],f:1,c:'#e7998a',cat:'設施',minor:1},
- {id:'wc2',name:'廁所',r:[1142,1100,1160,1150],f:1,c:'#e7998a',cat:'設施',minor:1},
-];
-/* 平面設施（不分樓層） */
-const FLATS=[
- {id:'bball1',name:'籃球場',r:[282,935,345,1128],c:'#a9bfba',cat:'運動'},
- {id:'volley',name:'排球場',r:[412,1000,495,1115],c:'#b7cdb0',cat:'運動'},
- {id:'tennis1',name:'網球場',r:[412,1115,497,1190],c:'#a9a6f0',cat:'運動'},
- {id:'pool',name:'游泳池',r:[505,1075,576,1185],c:'#4fb3d9',cat:'運動',water:1},
- {id:'tennis2',name:'網球場（南）',r:[296,1165,362,1262],c:'#a9a6f0',cat:'運動'},
- {id:'bball2',name:'籃球場（南）',r:[268,1165,296,1262],c:'#a9bfba',cat:'運動'},
- {id:'lawn',name:'梅花池草坪',r:[792,1162,985,1298],c:'#7fcc5a',cat:'景觀'},
- {id:'wall',name:'陶壁',r:[803,1095,862,1128],c:'#cbbca3',cat:'景觀',h:2.2},
- {id:'stage',name:'依風台',r:[576,645,616,742],c:'#bfeef6',cat:'運動',h:1.2},
- {id:'shed1',name:'車棚',r:[597,958,627,1205],c:'#5aa9cf',cat:'設施',roof:1},
- {id:'shed2',name:'車棚（東南）',r:[860,1322,1145,1370],c:'#5aa9cf',cat:'設施',roof:1},
- {id:'shed3',name:'車棚（西南）',r:[362,1165,390,1262],c:'#5aa9cf',cat:'設施',roof:1},
- {id:'baishi1',name:'白石園',r:[614,465,642,640],c:'#8bd65c',cat:'景觀'},
- {id:'baishi2',name:'白石園（南）',r:[618,742,646,915],c:'#8bd65c',cat:'景觀'},
- {id:'baishi3',name:'白石園（東）',r:[785,875,808,965],c:'#8bd65c',cat:'景觀'},
- {id:'avenue',name:'椰林大道',r:[650,470,780,1360],c:'#d6d0bd',cat:'景觀',road:1},
- {id:'plaza',name:'中庭廣場',r:[828,628,1060,862],c:'#c9a58c',cat:'景觀'},
-];
-const POINTS=[
- {id:'gate',name:'大門',p:[750,1405],cat:'出入口'},
- {id:'egate',name:'東側門',p:[1182,1090],cat:'出入口'},
- {id:'wgate',name:'西側門',p:[340,700],cat:'出入口'},
- {id:'ngate',name:'北側門',p:[982,212],cat:'出入口'},
- {id:'track',name:'運動場',p:[475,692],cat:'運動'},
- {id:'roma',name:'羅馬廣場',p:[970,835],cat:'景觀'},
- {id:'bell',name:'鐘樓',p:[1010,740],cat:'景觀'},
- {id:'meihua',name:'梅花池',p:[888,1222],cat:'景觀'},
- {id:'lizhu',name:'立譽亭',p:[626,476],cat:'景觀'},
- {id:'chengmen',name:'程門亭',p:[634,902],cat:'景觀'},
- {id:'jianghe',name:'江河亭',p:[380,1050],cat:'景觀'},
- {id:'atm',name:'ATM',p:[598,1392],cat:'設施'},
- {id:'hanpo',name:'好漢坡',p:[280,705],cat:'景觀'},
-];
-
-/* ===== Three.js 場景 ===== */
-const stage=document.getElementById('stage'), labelsEl=document.getElementById('labels');
-const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-stage.appendChild(renderer.domElement);
-const scene=new THREE.Scene();
-const camera=new THREE.PerspectiveCamera(45,1,1,3000);
-const controls=new THREE.OrbitControls(camera,renderer.domElement);
-controls.enableDamping=true; controls.maxPolarAngle=1.45; controls.minDistance=25; controls.maxDistance=700;
-const HOME={pos:new THREE.Vector3(-40,230,250),target:new THREE.Vector3(10,0,10)};
-camera.position.copy(HOME.pos); controls.target.copy(HOME.target);
-
-const hemi=new THREE.HemisphereLight(0xffffff,0x8d8a77,.75); scene.add(hemi);
-const sun=new THREE.DirectionalLight(0xffffff,.85); sun.position.set(-120,220,90);
-sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
-Object.assign(sun.shadow.camera,{left:-220,right:220,top:220,bottom:-220,near:10,far:600});
-sun.shadow.bias=-0.0005; scene.add(sun);
-
-const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-function applyTheme(){
-  scene.background=new THREE.Color(css('--bg'));
-  groundMat.color.set(css('--ground'));
-  const dark=document.documentElement.dataset.theme==='dark'||(!document.documentElement.dataset.theme&&matchMedia('(prefers-color-scheme: dark)').matches);
-  hemi.intensity=dark?.45:.75; sun.intensity=dark?.55:.85;
-}
-
-/* 地面（校地輪廓） */
-const outline=[[345,268],[1082,188],[1165,520],[1205,1060],[1175,1300],[1150,1385],[705,1368],[640,1402],[60,1398],[238,935],[330,932]];
-const gShape=new THREE.Shape(outline.map(([x,y])=>{const [X,Z]=P(x,y);return new THREE.Vector2(X,-Z)}));
-const groundMat=new THREE.MeshStandardMaterial({color:'#e6e1cf',roughness:1,transparent:true});
-const ground=new THREE.Mesh(new THREE.ShapeGeometry(gShape),groundMat);
-ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
-const surround=new THREE.Mesh(new THREE.PlaneGeometry(1400,1400),new THREE.MeshStandardMaterial({color:'#9aa596',roughness:1}));
-surround.rotation.x=-Math.PI/2; surround.position.y=-0.3; surround.receiveShadow=true; scene.add(surround);
-
-function flatBox(r,color,h=0.12,y=0,opts={}){
-  const [x1,z1]=P(r[0],r[1]),[x2,z2]=P(r[2],r[3]);
-  const m=new THREE.Mesh(new THREE.BoxGeometry(x2-x1,h,z2-z1),new THREE.MeshStandardMaterial({color,roughness:.9,...opts}));
-  m.position.set((x1+x2)/2,y+h/2,(z1+z2)/2); m.receiveShadow=true; m.castShadow=h>1; scene.add(m); return m;
-}
-function stadium(cx,cy,rx,half){ // 跑道形狀（像素）
-  const s=new THREE.Shape(),[X,Z]=P(cx,cy),R=rx*S,H=half*S;
-  s.moveTo(X-R,-(Z-H)); s.lineTo(X-R,-(Z+H));
-  s.absarc(X,-(Z+H),R,Math.PI,2*Math.PI,false); s.lineTo(X+R,-(Z-H));
-  s.absarc(X,-(Z-H),R,0,Math.PI,false); return s;
-}
-function flatShape(shape,color,y){const m=new THREE.Mesh(new THREE.ShapeGeometry(shape,48),new THREE.MeshStandardMaterial({color,roughness:1}));
-  m.rotation.x=-Math.PI/2; m.position.y=y; m.receiveShadow=true; scene.add(m); return m;}
-flatShape(stadium(475,692,102,125),'#c7e83a',.05);
-flatShape(stadium(475,692,85,120),'#f4f2ec',.08);
-flatShape(stadium(475,692,64,112),'#6fcf3f',.11);
-for(let i=0;i<4;i++){ const x=576+i*7; flatBox([x,465,x+3,920],'#ffffff',.1,.05);} // 直線跑道
-
-/* ===== 建築 ===== */
-const pickables=[], labelItems=[], index=[];
-const buildingMap={};
-function addLabel(text,pos,cls,ref){
-  const el=document.createElement('div'); el.className='lbl '+cls; el.textContent=text;
-  el.addEventListener('click',e=>{e.stopPropagation();select(ref,true)});
-  labelsEl.appendChild(el); const it={el,pos,cls,ref,show:true}; labelItems.push(it); return it;
-}
-BUILDINGS.forEach(b=>{
-  const rects=[b.r,...(b.extra||[])];
-  const levels=[]; const low=b.b1?-1:0;
-  const fh=FH*(b.tall||1);
-  b.floorsList=[]; b.meshes=[]; b.roomItems=[];
-  for(let lv=low;lv<b.f;lv++){
-    const floorNo=lv<0?-1:lv+1;
-    const grp={floorNo,meshes:[],labels:[]};
-    rects.forEach((r,ri)=>{
-      const [x1,z1]=P(r[0],r[1]),[x2,z2]=P(r[2],r[3]);
-      const w=x2-x1,d=z2-z1,y=lv*fh;
-      const base=new THREE.Color(b.c);
-      if(b.rooms&&ri===0){
-        const alongX=(b.axis||'x')==='x';
-        const len=alongX?w:d, depth=alongX?d:w;
-        // 走廊
-        const cor=new THREE.Mesh(new THREE.BoxGeometry(alongX?w:depth*.28,fh-.25,alongX?depth*.28:d),
-          new THREE.MeshStandardMaterial({color:base.clone().offsetHSL(0,-.05,.08),roughness:.8,transparent:true}));
-        cor.position.set(alongX?(x1+x2)/2:x2-depth*.14,y+(fh-.25)/2,alongX?z2-depth*.14:(z1+z2)/2);
-        cor.userData={b}; grp.meshes.push(cor);
-        const n=b.rooms, seg=len/n;
-        for(let k=0;k<n;k++){
-          const rm=new THREE.Mesh(new THREE.BoxGeometry(alongX?seg-.5:depth*.7,fh-.25,alongX?depth*.7:seg-.5),
-            new THREE.MeshStandardMaterial({color:base.clone().offsetHSL(0,0,(k%2)*-.04),roughness:.85,transparent:true}));
-          const cx=alongX?x1+seg*(k+.5):x1+depth*.35, cz=alongX?z1+depth*.35:z1+seg*(k+.5);
-          rm.position.set(cx,y+(fh-.25)/2,cz);
-          const code=`${b.short} ${floorNo<0?'B1':floorNo}${String(k+1).padStart(2,'0')}`;
-          const room={type:'room',id:`${b.id}-${floorNo}-${k}`,name:code,b,floorNo,mesh:rm,center:new THREE.Vector3(cx,y+fh/2,cz)};
-          rm.userData={b,room}; grp.meshes.push(rm);
-          const li=addLabel(code,new THREE.Vector3(cx,y+fh+.6,cz),'room',room); li.room=room; grp.labels.push(li);
-          index.push({kind:'教室',label:code,sub:`${b.name}・${floorNo<0?'B1':floorNo+'F'}・示意編號`,ref:room});
-        }
-      }else{
-        const m=new THREE.Mesh(new THREE.BoxGeometry(w,fh-.25,d),
-          new THREE.MeshStandardMaterial({color:base,roughness:.85,transparent:true}));
-        m.position.set((x1+x2)/2,y+(fh-.25)/2,(z1+z2)/2); m.userData={b}; grp.meshes.push(m);
-      }
-      // 樓板
-      const slab=new THREE.Mesh(new THREE.BoxGeometry(w+.6,.25,d+.6),new THREE.MeshStandardMaterial({color:'#f3f0e6',roughness:.9,transparent:true}));
-      slab.position.set((x1+x2)/2,y+fh-.125,(z1+z2)/2); slab.userData={b}; grp.meshes.push(slab);
-    });
-    grp.meshes.forEach(m=>{m.castShadow=true;m.receiveShadow=true;scene.add(m);pickables.push(m);b.meshes.push(m)});
-    b.floorsList.push(grp);
-  }
-  const [x1,z1]=P(b.r[0],b.r[1]),[x2,z2]=P(b.r[2],b.r[3]);
-  b.center=new THREE.Vector3((x1+x2)/2,b.f*fh/2,(z1+z2)/2); b.size=Math.max(x2-x1,z2-z1);
-  b.top=b.f*fh;
-  b.label=addLabel(b.name+(b.sub?`（${b.sub}）`:''),new THREE.Vector3(b.center.x,b.top+2.5,b.center.z),b.minor?'minor':'bld',{type:'building',b});
-  b.type='building'; buildingMap[b.id]=b;
-  index.push({kind:'建築',label:b.name+(b.sub?`（${b.sub}）`:''),sub:`${b.cat}・${b.b1?'B1–':''}${b.f}F`,ref:{type:'building',b}});
-});
-
-FLATS.forEach(f=>{
-  let m;
-  if(f.roof){ // 車棚：柱 + 棚頂
-    const [x1,z1]=P(f.r[0],f.r[1]),[x2,z2]=P(f.r[2],f.r[3]);
-    m=new THREE.Mesh(new THREE.BoxGeometry(x2-x1,.3,z2-z1),new THREE.MeshStandardMaterial({color:f.c,roughness:.6}));
-    m.position.set((x1+x2)/2,3,(z1+z2)/2); m.castShadow=true; scene.add(m);
-  } else m=flatBox(f.r,f.c,f.h||(f.road?.04:.15),0,f.water?{roughness:.15,metalness:.1}:{});
-  f.center=m.position.clone(); f.size=Math.max(Math.abs(f.r[2]-f.r[0]),Math.abs(f.r[3]-f.r[1]))*S;
-  m.userData={flat:f}; pickables.push(m);
-  if(!/（/.test(f.name)||f.id==='shed2') f.label=addLabel(f.name,f.center.clone().add(new THREE.Vector3(0,(f.h||1)+2,0)),'minor',{type:'flat',f});
-  index.push({kind:'設施',label:f.name,sub:f.cat,ref:{type:'flat',f}});
-});
-POINTS.forEach(p=>{
-  const [X,Z]=P(...p.p); p.center=new THREE.Vector3(X,0,Z); p.size=30;
-  if(p.cat==='出入口'){[-3,3].forEach(o=>{const g=new THREE.Mesh(new THREE.BoxGeometry(1.4,3.2,1.4),new THREE.MeshStandardMaterial({color:'#8a7f6b'}));
-    g.position.set(X+o,1.6,Z);g.castShadow=true;scene.add(g)});}
-  if(['lizhu','chengmen','jianghe'].includes(p.id)){ // 亭
-    const roof=new THREE.Mesh(new THREE.ConeGeometry(2.4,1.8,4),new THREE.MeshStandardMaterial({color:'#b23a2c'}));
-    roof.position.set(X,3.8,Z); roof.rotation.y=Math.PI/4; roof.castShadow=true; scene.add(roof);
-    const post=new THREE.Mesh(new THREE.CylinderGeometry(.25,.25,3,8),new THREE.MeshStandardMaterial({color:'#7a5a40'}));post.position.set(X,1.5,Z);scene.add(post);}
-  if(p.id==='bell'){const t=new THREE.Mesh(new THREE.CylinderGeometry(2,2.4,9,16),new THREE.MeshStandardMaterial({color:'#b59a6c'}));t.position.set(X,4.5,Z);t.castShadow=true;scene.add(t);}
-  if(p.id==='roma'){const s=new THREE.Mesh(new THREE.CylinderGeometry(14,14,.6,40,1,false,Math.PI/2,Math.PI),new THREE.MeshStandardMaterial({color:'#f2cf6b'}));s.position.set(X,.3,Z+4);scene.add(s);}
-  if(p.id==='meihua'){const s=new THREE.Mesh(new THREE.CylinderGeometry(5,5,.4,5),new THREE.MeshStandardMaterial({color:'#69b8e0',roughness:.2}));s.position.set(X,.3,Z);scene.add(s);}
-  p.label=addLabel(p.name,p.center.clone().add(new THREE.Vector3(0,p.id==='track'?2:6,0)),p.cat==='出入口'?'bld':'minor',{type:'point',p});
-  index.push({kind:'地點',label:p.name,sub:p.cat,ref:{type:'point',p}});
-});
-// 水池（陽明學苑西側）
-flatBox([738,385,765,442],'#9fdcef',.3,0,{roughness:.2});
-
-/* 椰子樹 */
-const trunkM=new THREE.MeshStandardMaterial({color:'#8b6b4a'}),leafM=new THREE.MeshStandardMaterial({color:'#2f8f3a'});
-function palm(x,y){const [X,Z]=P(x,y);const t=new THREE.Mesh(new THREE.CylinderGeometry(.35,.5,9,6),trunkM);t.position.set(X,4.5,Z);t.castShadow=true;scene.add(t);
-  for(let i=0;i<6;i++){const l=new THREE.Mesh(new THREE.ConeGeometry(.7,5,4),leafM);l.position.set(X,9,Z);l.rotation.z=1.15;l.rotation.y=i*Math.PI/3;
-    l.translateY(2.2);l.castShadow=true;scene.add(l);}}
-[[655,522],[748,522],[658,635],[750,630],[658,765],[748,762],[658,875],[756,870],[658,975],[760,975],[660,1075],[766,1075],[665,1175],[772,1172],[670,1268],[776,1262]].forEach(p=>palm(...p));
-
-/* ===== 樓層切換 ===== */
-let floorMode='all', showLabels=true, selected=null;
-function setFloor(f){
-  floorMode=f;
-  document.querySelectorAll('#rail .floor').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.f===String(f))));
-  groundMat.opacity=f==='-1'||f===-1?.35:1; groundMat.depthWrite=!(f==='-1'||f===-1);
-  const F=f==='all'?null:Number(f);
-  BUILDINGS.forEach(b=>{
-    b.floorsList.forEach(g=>{
-      let vis=true,op=1;
-      if(F!==null){ if(g.floorNo>F) vis=false; else if(g.floorNo<F) op=.25; }
-      if(F===null&&g.floorNo<0) vis=true;
-      g.meshes.forEach(m=>{m.visible=vis;m.material.opacity=op;m.material.depthWrite=op===1;});
-      g.labels.forEach(l=>l.show=F!==null&&g.floorNo===F);
-    });
-    // 樓層模式：建築標籤移到該樓層上方
-    const hasF=F===null||b.floorsList.some(g=>g.floorNo===F);
-    b.label.show=hasF||F===null;
-    const fh=FH*(b.tall||1);
-    const topLv=F===null?b.f:(F<0?0:Math.min(F,b.f));
-    b.label.pos.y=topLv*fh+(b.rooms&&F!==null?5:2.5);
-  });
-}
-document.querySelectorAll('#rail .floor').forEach(btn=>btn.addEventListener('click',()=>setFloor(btn.dataset.f)));
-document.getElementById('toggleLbl').addEventListener('click',e=>{showLabels=!showLabels;e.currentTarget.setAttribute('aria-pressed',String(showLabels));});
-document.getElementById('reset').addEventListener('click',()=>flyTo(HOME.target,HOME.pos));
-
-/* ===== 選取與資訊 ===== */
-const info=document.getElementById('info');
-let highlight=null;
-function clearHighlight(){ if(highlight){highlight.forEach(m=>m.material.emissive&&m.material.emissive.set(0));highlight=null;} labelItems.forEach(l=>l.el.classList.remove('sel')); }
-function select(ref,fly){
-  clearHighlight(); if(!ref){info.hidden=true;return;}
-  let name,meta=[],desc,target,dist;
-  if(ref.type==='room'){
-    const r=ref; if(String(floorMode)!==String(r.floorNo)) setFloor(String(r.floorNo));
-    highlight=[r.mesh]; r.mesh.material.emissive.set(css('--mark'));r.mesh.material.emissiveIntensity=.45;
-    labelItems.find(l=>l.ref===r)?.el.classList.add('sel');
-    name=r.name; meta=[r.b.name,r.floorNo<0?'地下一樓':r.floorNo+' 樓','示意編號'];
-    desc=`位於${r.b.name}${r.floorNo<0?'地下一樓':r.floorNo+' 樓'}。教室編號為依平面圖格局產生的示意編號，請以學校實際門牌為準（可於程式碼中的 BUILDINGS 資料修改）。`;
-    target=r.center; dist=40;
-  }else if(ref.type==='building'){
-    const b=ref.b; highlight=b.meshes.filter(m=>m.visible); highlight.forEach(m=>{m.material.emissive.set(css('--mark'));m.material.emissiveIntensity=.18});
-    b.label.el.classList.add('sel');
-    name=b.name+(b.sub?`（${b.sub}）`:''); meta=[b.cat,`地上 ${b.f} 層`,...(b.b1?['地下 1 層']:[])];
-    desc=b.rooms?`主要教學空間，平面圖可見樓梯與分間格局。切換右側樓層可查看各層教室。`:`${b.cat}空間，依校園平面圖位置建模。`;
-    target=b.center; dist=Math.max(60,b.size*2.2);
-  }else if(ref.type==='flat'){
-    const f=ref.f; f.label?.el.classList.add('sel'); name=f.name; meta=[f.cat]; desc='戶外空間，依校園平面圖位置建模。'; target=f.center; dist=Math.max(60,f.size*1.6);
-  }else{
-    const p=ref.p; p.label.el.classList.add('sel'); name=p.name; meta=[p.cat]; desc=p.cat==='出入口'?'校園出入口。':'校園地標，依平面圖位置標示。'; target=p.center; dist=p.id==='track'?140:70;
-  }
-  document.getElementById('infoName').textContent=name;
-  document.getElementById('infoMeta').innerHTML=meta.map(m=>`<span class="chip">${m}</span>`).join('');
-  document.getElementById('infoDesc').textContent=desc;
-  info.hidden=false;
-  if(fly){const dir=camera.position.clone().sub(controls.target).normalize();
-    flyTo(target,target.clone().add(dir.multiplyScalar(dist)).setY(target.y+dist*.75));}
-}
-document.getElementById('closeInfo').addEventListener('click',()=>select(null));
-
-let tween=null;
-function flyTo(t,p){tween={t0:controls.target.clone(),p0:camera.position.clone(),t1:t.clone(),p1:p.clone(),s:performance.now()};}
-
-const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();let down=null;
-renderer.domElement.addEventListener('pointerdown',e=>down=[e.clientX,e.clientY]);
-renderer.domElement.addEventListener('pointerup',e=>{
-  if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;
-  mouse.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1); ray.setFromCamera(mouse,camera);
-  const hit=ray.intersectObjects(pickables.filter(m=>m.visible&&(m.material.opacity===undefined||m.material.opacity>.5)))[0];
-  if(!hit){select(null);return;}
-  const u=hit.object.userData;
-  if(u.room&&floorMode!=='all') select(u.room,false);
-  else if(u.b) select({type:'building',b:u.b},false);
-  else if(u.flat) select({type:'flat',f:u.flat},false);
-});
-
-/* ===== 搜尋 ===== */
-const q=document.getElementById('q'),results=document.getElementById('results');
-q.addEventListener('input',()=>{
-  const s=q.value.trim().replace(/\s+/g,'').toLowerCase(); results.innerHTML='';
-  if(!s)return;
-  index.filter(i=>(i.label+i.sub).replace(/\s+/g,'').toLowerCase().includes(s)).slice(0,12).forEach(i=>{
-    const li=document.createElement('li'),b=document.createElement('button');
-    b.innerHTML=`<span>${i.label}</span><small>${i.kind}・${i.sub}</small>`;
-    b.addEventListener('click',()=>{select(i.ref,true);results.innerHTML='';q.value=i.label;});
-    li.appendChild(b);results.appendChild(li);
-  });
-  if(!results.children.length) results.innerHTML='<li style="font-size:12px;color:var(--muted);padding:6px 8px">找不到符合的地點</li>';
-});
-q.addEventListener('keydown',e=>{if(e.key==='Enter')results.querySelector('button')?.click();});
-
-/* ===== 迴圈 ===== */
-function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
-addEventListener('resize',resize);resize();
-const v=new THREE.Vector3();
-function loop(now){
-  if(tween){const k=Math.min(1,(now-tween.s)/900),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
-    controls.target.lerpVectors(tween.t0,tween.t1,e);camera.position.lerpVectors(tween.p0,tween.p1,e);if(k===1)tween=null;}
-  controls.update(); renderer.render(scene,camera);
-  const dist=camera.position.distanceTo(controls.target);
-  for(const l of labelItems){
-    let vis=showLabels&&l.show;
-    if(vis&&l.cls==='minor'&&dist>420&&!l.el.classList.contains('sel'))vis=false;
-    if(vis){v.copy(l.pos).project(camera); vis=v.z<1&&Math.abs(v.x)<1.1&&Math.abs(v.y)<1.1;}
-    if(vis){l.el.style.display='';l.el.style.transform=`translate(-50%,-100%) translate(${(v.x+1)/2*innerWidth}px,${(1-v.y)/2*innerHeight}px)`;}
-    else l.el.style.display='none';
-  }
-  requestAnimationFrame(loop);
-}
-applyTheme();
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change',applyTheme);
-new MutationObserver(applyTheme).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-setFloor('all');
-requestAnimationFrame(loop);
-</script>
+<script src="js/vendor/three.min.js"></script>
+<script src="js/vendor/OrbitControls.js"></script>
+<script src="data/campus-data.js"></script>
+<script src="data/school-year.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>

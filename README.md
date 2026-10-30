@@ -1,39 +1,65 @@
-# 國立嘉義高中 3D 校園導覽
+# 國立嘉義高中 3D 互動校園導覽
 
-依「國立嘉義高中校園平面圖」建模的互動式 3D 校園，單一 HTML 檔，不需建置。
+用 **Three.js (WebGL)** 做成的國立嘉義高中 3D 校園導覽，依校園平面圖與 115 學年度教室配置圖建置。這是純前端靜態網頁，電腦與手機都能使用。
 
-## 功能
-- 3D 建築（依平面圖位置與樓層數建模）
-- 建築／教室標籤（點擊可看資訊）
-- 樓層切換：全部、B1、1F–4F
-- 搜尋建築、教室、設施、出入口
+## 主要功能
 
-> 教室編號（如「懷恩 301」）目前是依平面圖格局產生的**示意編號**。
-> 請在 `index.html` 的 `BUILDINGS` 陣列修改 `rooms`（每層間數），或改寫房間命名規則以對應實際門牌。
+- **3D 校園建築**：涵蓋懷恩樓、樸毅樓、宏觀樓、旭陵樓（行政大樓）、科學館、圖書館、樹人堂、體育館等建築，以及運動場、各式球場、游泳池、椰林大道。
+- **115 學年度班級教室**：懷恩樓、樸毅樓、宏觀樓共 60 個班級，依年級分色（高一綠、高二藍、高三黃），處室與專科教室另外標示。
+- **樓層剖面**：可切換全部、B1、1F 到 4F。上層會隱藏，下層會變淡。
+- **搜尋**：輸入班級（如 `315`）、處室（如「輔導室」）或地點（如「圖書館」），畫面會直接飛到所在的建築與樓層。
+- **建築資訊卡**：點建築可以看簡介和各樓層的空間配置，點其中的教室就會定位。
+- **校園漫步**：從大門出發，可切換第三人稱或第一人稱。不會穿過建築或圍牆。
+- **指北針**：點一下回到正北視角。
+- **網址直達**：在網址後面加 `#315`，開啟時會直接定位到 315 班。
+- 支援淺色與深色主題，也有手機版面（底部工具列、漫步搖桿）。
 
-## 本機預覽
-直接用瀏覽器開啟 `index.html`，或：
-```bash
-python3 -m http.server 8000
+## 操作方式
+
+| | 電腦 | 手機／平板 |
+|---|---|---|
+| 旋轉 | 左鍵拖曳 | 單指拖曳 |
+| 平移 | 右鍵拖曳 | 雙指拖曳 |
+| 縮放 | 滾輪 | 雙指捏合 |
+| 漫步移動 | WASD／方向鍵，Shift 跑步 | 左下搖桿 |
+| 漫步轉向 | 拖曳畫面 | 拖曳畫面 |
+
+## 專案結構
+
+```
+index.html             頁面結構
+css/style.css          版面與樣式（含手機版面、深色主題）
+js/app.js              主程式：場景、樓層、搜尋、資訊卡、漫步
+js/vendor/             Three.js r147 與 OrbitControls（MIT 授權，放在專案內）
+data/school-year.js    每學年更新：學年度、建築簡介、各樓層教室配置
+data/campus-data.js    校園結構：建築位置、樓層數、顏色、設施、樹木
+render.yaml            Render 靜態網站設定
 ```
 
-## 部署到 GitHub
+### 每學年更新
+
+換學年時只需要改 `data/school-year.js`：
+
+- `academicYear`：學年度。
+- `buildings.<id>.floorsData`：各樓層空間，依建築走向排列。懷恩樓、宏觀樓是由西到東，樸毅樓是由北到南。
+- 每個空間的格式是 `{ code, name, type, span }`。`type` 的可用值是 `class1`、`class2`、`class3`、`special`、`office`、`stair`、`common`。`span` 是佔幾格，例如輔導室佔 3 格。
+
+### 調整建築位置
+
+`data/campus-data.js` 的 `r:[左,上,右,下]` 是建築在校園平面圖上的像素範圍，約 1 像素等於 0.33 公尺。可以對照 Google 地圖微調。
+
+## 部署
+
+不需要建置，直接部署即可。
+
+- **Render**：New → Blueprint，選擇這個 repo，Render 會讀取 `render.yaml`。之後每次 push 都會自動部署。
+- **GitHub Pages**：Settings → Pages → Deploy from a branch，選 `main` 和 `/ (root)`。
+- **本機預覽**：
+
 ```bash
-git init
-git add .
-git commit -m "3D 校園導覽初版"
-git branch -M main
-git remote add origin https://github.com/<你的帳號>/cysh-3d-campus.git
-git push -u origin main
+python3 -m http.server 8080
 ```
-GitHub Pages：Repo → Settings → Pages → Source 選 `main` / root。
 
-## 部署到 Render
-1. 到 render.com → New → **Blueprint**（或 Static Site）
-2. 連結上面的 GitHub repo，Render 會讀取 `render.yaml`
-3. Static Site 手動設定時：Build Command 留空，Publish Directory 填 `.`
-之後每次 `git push`，Render 會自動重新部署。
+## 資料來源
 
-## 調整位置
-座標換算在 `const S=0.33, FH=3.6, CX=720, CY=840;`
-每棟建築的 `r:[左,上,右,下]` 是平面圖上的像素範圍，可對照 Google 地圖微調。
+國立嘉義高中校園平面圖、國立嘉義高中教室配置圖（115 學年度）。
