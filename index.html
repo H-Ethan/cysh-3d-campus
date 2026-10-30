@@ -4,67 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>嘉義高中 3D 校園導覽</title>
-<meta name="description" content="國立嘉義高中互動 3D 校園導覽：建築、班級教室、樓層切換、搜尋與校園漫步。">
+<meta name="description" content="國立嘉義高中 3D 互動校園導覽：依官方校園平面圖與 115 學年度教室配置建置，可搜尋班級、切換樓層、規劃步行路線與校園漫步。">
 <meta property="og:title" content="國立嘉義高中 3D 校園導覽">
-<meta property="og:description" content="搜尋班級教室、切換樓層，在 3D 校園裡漫步。">
+<meta property="og:description" content="搜尋班級教室、切換樓層、規劃校內步行路線，在 3D 校園裡漫步。">
+<meta name="theme-color" content="#1f3b33">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
-<link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div id="stage" aria-label="國立嘉義高中 3D 校園模型"></div>
-<div id="labels"></div>
-
-<section id="top" class="card">
-  <header><h1>嘉義高中 3D 校園導覽</h1><span id="year"></span></header>
-  <p>拖曳旋轉、滾輪縮放、右鍵平移。點建築看各樓層教室。</p>
-  <input id="q" type="search" placeholder="搜尋班級或地點，例如 315、輔導室、圖書館" autocomplete="off" aria-label="搜尋班級或地點">
-  <ul id="results"></ul>
-  <div class="legend" aria-label="圖例">
-    <span><i style="background:var(--g1)"></i>高一</span>
-    <span><i style="background:var(--g2)"></i>高二</span>
-    <span><i style="background:var(--g3)"></i>高三</span>
-    <span><i style="background:var(--special)"></i>專科教室</span>
-    <span><i style="background:var(--office)"></i>處室</span>
-  </div>
-</section>
-
-<nav id="rail" class="card" aria-label="樓層與檢視">
-  <button class="btn" id="compass" title="回正北" aria-label="回正北">
-    <svg viewBox="0 0 26 26" aria-hidden="true"><g id="needle"><path d="M13 2 L17 13 L13 11.5 L9 13 Z" fill="var(--mark)"/><path d="M13 24 L17 13 L13 14.5 L9 13 Z" fill="var(--muted)"/></g><text x="13" y="8.5" font-size="0" fill="none">N</text></svg>
-  </button>
-  <div class="cap">樓層</div>
-  <button class="btn floor" data-f="all" aria-pressed="true">全部</button>
-  <button class="btn floor" data-f="4" aria-pressed="false">4F</button>
-  <button class="btn floor" data-f="3" aria-pressed="false">3F</button>
-  <button class="btn floor" data-f="2" aria-pressed="false">2F</button>
-  <button class="btn floor" data-f="1" aria-pressed="false">1F</button>
-  <button class="btn floor" data-f="-1" aria-pressed="false">B1</button>
-  <div class="sep"></div>
-  <button class="btn" id="reset" title="回到鳥瞰視角">鳥瞰</button>
-  <button class="btn" id="walkBtn" title="在校園中漫步">漫步</button>
-  <button class="btn" id="toggleLbl" aria-pressed="true" title="顯示／隱藏標籤">標籤</button>
-</nav>
-
-<section id="info" class="card" hidden>
-  <button class="btn x" id="closeInfo" aria-label="關閉">✕</button>
-  <h2 id="infoName"></h2>
-  <div class="meta" id="infoMeta"></div>
-  <p id="infoDesc"></p>
-  <div id="infoFloors"></div>
-</section>
-
-<div id="walkbar" class="card" hidden>
-  <span class="hint" id="walkHint">WASD／方向鍵移動・拖曳轉向・Shift 跑步</span>
-  <button class="btn" id="povBtn" aria-pressed="false">第一人稱</button>
-  <button class="btn" id="exitWalk">結束漫步</button>
-</div>
-<div id="joy" hidden><i></i></div>
-
-<script src="js/vendor/three.min.js"></script>
-<script src="js/vendor/OrbitControls.js"></script>
-<script src="data/campus-data.js"></script>
-<script src="data/school-year.js"></script>
-<script src="js/app.js"></script>
+<div id="root"></div>
+<noscript>本網站需要啟用 JavaScript。</noscript>
+<script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
